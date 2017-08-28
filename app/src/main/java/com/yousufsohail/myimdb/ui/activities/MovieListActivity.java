@@ -129,8 +129,8 @@ public class MovieListActivity extends AppCompatActivity {
         progressBar.setVisibility(View.GONE);
     }
 
-    //TODO: Adapter class can be moved to its own class
-
+    // Adapter is made internet class, because it only relate to this class.
+    //TODO: Adapter class can be moved to its own separate class
     class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.ViewHolder> {
 
         private List<Movie> mValues;
@@ -158,6 +158,7 @@ public class MovieListActivity extends AppCompatActivity {
                     if (mTwoPane) {
                         Bundle arguments = new Bundle();
                         arguments.putString(MovieDetailFragment.ARG_ITEM_ID, holder.mItem.getId());
+                        arguments.putString(MovieDetailFragment.ARG_ITEM_TITLE, holder.mItem.getTitle());
                         MovieDetailFragment fragment = new MovieDetailFragment();
                         fragment.setArguments(arguments);
                         getSupportFragmentManager().beginTransaction()
@@ -167,6 +168,7 @@ public class MovieListActivity extends AppCompatActivity {
                         Context context = v.getContext();
                         Intent intent = new Intent(context, MovieDetailActivity.class);
                         intent.putExtra(MovieDetailFragment.ARG_ITEM_ID, holder.mItem.getId());
+                        intent.putExtra(MovieDetailFragment.ARG_ITEM_TITLE, holder.mItem.getTitle());
 
                         context.startActivity(intent);
                     }
