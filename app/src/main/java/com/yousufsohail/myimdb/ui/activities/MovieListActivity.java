@@ -120,6 +120,9 @@ public class MovieListActivity extends AppCompatActivity {
             case R.id.menu_item_sort:
                 Toast.makeText(this, "Sorting is not supported in IMDB API", Toast.LENGTH_SHORT).show();
                 return true;
+            case R.id.menu_item_about:
+                startActivity(new Intent(this, AboutActivity.class));
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }

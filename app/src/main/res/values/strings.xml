@@ -6,4 +6,5 @@
     <string name="movie_not_found">No movies found.</string>
     <string name="went_wrong">Something went wrong. Please try again</string>
     <string name="sort">Sort</string>
+    <string name="about_text">Developed by Yousuf Sohail\nExperienced Android Engineer\n\nhttps://linkedin.com/in/yousufsohail\nmyousufsohail@gmail.com</string>
 </resources>

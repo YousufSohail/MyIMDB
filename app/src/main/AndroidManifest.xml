@@ -30,6 +30,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.yousufsohail.myimdb.ui.activities.MovieListActivity" />
         </activity>
+        <activity android:name=".ui.activities.AboutActivity"></activity>
     </application>
 
 </manifest>
