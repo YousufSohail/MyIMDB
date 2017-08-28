@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My IMDB</string>
+    <string name="title_movie_list">Movies</string>
+    <string name="title_movie_detail">Movie Detail</string>
+</resources>
