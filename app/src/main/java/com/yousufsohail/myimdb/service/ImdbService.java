@@ -15,4 +15,7 @@ public interface ImdbService {
     @GET("movie/top_rated")
     Call<ResponseMoviesTopRated> getMoviesTop(@Query("api_key") String apiKey);
 
+    @GET("movie/latest")
+    Call<ResponseMoviesTopRated> getMoviesLatest(@Query("api_key") String apiKey);
+
 }

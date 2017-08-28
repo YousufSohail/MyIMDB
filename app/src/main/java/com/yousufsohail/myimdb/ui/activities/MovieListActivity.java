@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.yousufsohail.myimdb.R;
 import com.yousufsohail.myimdb.entity.Movie;
@@ -19,6 +20,7 @@ import com.yousufsohail.myimdb.service.response.ResponseMoviesTopRated;
 import com.yousufsohail.myimdb.ui.fragments.MovieDetailFragment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -37,6 +39,8 @@ import static com.yousufsohail.myimdb.constant.ApiConstants.IMDB_API_KEY;
 public class MovieListActivity extends AppCompatActivity {
 
     RecyclerView recyclerView;
+    MovieListAdapter mAdapter;
+    List<Movie> movies = new ArrayList<>();
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
@@ -54,7 +58,7 @@ public class MovieListActivity extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.movie_list);
         assert recyclerView != null;
-        setupRecyclerView();
+        setDataInAdapter(movies);
 
         if (findViewById(R.id.movie_detail_container) != null) {
             // The detail container view will be present only in the
@@ -65,32 +69,55 @@ public class MovieListActivity extends AppCompatActivity {
         }
     }
 
-    private void setupRecyclerView() {
-        fetchMoviesTop();
-//        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DummyContent.ITEMS));
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshMovieList();
     }
 
-    private void fetchMoviesTop() {
+    private void setDataInAdapter(List<Movie> movies) {
+        if (mAdapter == null) {
+            mAdapter = new MovieListAdapter(movies);
+            recyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.updateList(movies);
+        }
+    }
+
+    private void refreshMovieList() {
         ImdbService service = ServiceGenerator.getInstance().createService(ImdbService.class);
-        Call<ResponseMoviesTopRated> movies = service.getMoviesTop(IMDB_API_KEY);
-        movies.enqueue(new Callback<ResponseMoviesTopRated>() {
+        Call<ResponseMoviesTopRated> getMovies = service.getMoviesTop(IMDB_API_KEY);
+        getMovies.enqueue(new Callback<ResponseMoviesTopRated>() {
             @Override
             public void onResponse(Call<ResponseMoviesTopRated> call, Response<ResponseMoviesTopRated> response) {
-                recyclerView.setAdapter(new MovieListAdapter(response.body().getMovies()));
+
+                ResponseMoviesTopRated body = response.body();
+
+                if (!response.isSuccessful()) {
+                    Toast.makeText(MovieListActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
+                } else if (body != null && body.getMovies() != null && body.getMovies().size() > 0) {
+
+                    movies.clear();
+                    movies.addAll(body.getMovies());
+                    setDataInAdapter(movies);
+
+                } else {
+                    Toast.makeText(MovieListActivity.this, R.string.movie_not_found, Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onFailure(Call<ResponseMoviesTopRated> call, Throwable t) {
-
+                Toast.makeText(MovieListActivity.this, R.string.went_wrong, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.ViewHolder> {
 
-        private final ArrayList<Movie> mValues;
+        private List<Movie> mValues;
 
-        public MovieListAdapter(ArrayList<Movie> movies) {
+        public MovieListAdapter(List<Movie> movies) {
             mValues = movies;
         }
 
@@ -134,13 +161,18 @@ public class MovieListActivity extends AppCompatActivity {
             return mValues.size();
         }
 
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public final View mView;
-            public final TextView mIdView;
-            public final TextView mContentView;
-            public Movie mItem;
+        public void updateList(List<Movie> modelArrayList) {
+            this.mValues = modelArrayList;
+            this.notifyDataSetChanged();
+        }
 
-            public ViewHolder(View view) {
+        class ViewHolder extends RecyclerView.ViewHolder {
+            final View mView;
+            final TextView mIdView;
+            final TextView mContentView;
+            Movie mItem;
+
+            ViewHolder(View view) {
                 super(view);
                 mView = view;
                 mIdView = (TextView) view.findViewById(R.id.id);
