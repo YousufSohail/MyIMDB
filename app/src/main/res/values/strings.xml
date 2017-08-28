@@ -5,4 +5,5 @@
     <string name="server_error">Server error. Please try again</string>
     <string name="movie_not_found">No movies found.</string>
     <string name="went_wrong">Something went wrong. Please try again</string>
+    <string name="sort">Sort</string>
 </resources>
