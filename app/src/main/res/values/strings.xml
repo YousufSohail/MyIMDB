@@ -2,4 +2,7 @@
     <string name="app_name">My IMDB</string>
     <string name="title_movie_list">Movies</string>
     <string name="title_movie_detail">Movie Detail</string>
+    <string name="server_error">Server error. Please try again</string>
+    <string name="movie_not_found">No movies found.</string>
+    <string name="went_wrong">Something went wrong. Please try again</string>
 </resources>
