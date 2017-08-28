@@ -9,6 +9,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +41,7 @@ public class MovieListActivity extends AppCompatActivity {
 
     RecyclerView recyclerView;
     MovieListAdapter mAdapter;
+    ProgressBar progressBar;
     List<Movie> movies = new ArrayList<>();
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -55,6 +57,8 @@ public class MovieListActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
+
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         recyclerView = (RecyclerView) findViewById(R.id.movie_list);
         assert recyclerView != null;
@@ -85,12 +89,15 @@ public class MovieListActivity extends AppCompatActivity {
     }
 
     private void refreshMovieList() {
+
+        showProgressBar();
+
         ImdbService service = ServiceGenerator.getInstance().createService(ImdbService.class);
         Call<ResponseMoviesTopRated> getMovies = service.getMoviesTop(IMDB_API_KEY);
         getMovies.enqueue(new Callback<ResponseMoviesTopRated>() {
             @Override
             public void onResponse(Call<ResponseMoviesTopRated> call, Response<ResponseMoviesTopRated> response) {
-
+                hideProgressBar();
                 ResponseMoviesTopRated body = response.body();
 
                 if (!response.isSuccessful()) {
@@ -108,10 +115,21 @@ public class MovieListActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ResponseMoviesTopRated> call, Throwable t) {
+                hideProgressBar();
                 Toast.makeText(MovieListActivity.this, R.string.went_wrong, Toast.LENGTH_SHORT).show();
             }
         });
     }
+
+    private void showProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
+    }
+
+    //TODO: Adapter class can be moved to its own class
 
     class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.ViewHolder> {
 
