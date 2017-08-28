@@ -1,25 +1,21 @@
 package com.yousufsohail.myimdb.ui.activities;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
 
-
-import com.yousufsohail.myimdb.ui.fragments.MovieDetailFragment;
 import com.yousufsohail.myimdb.R;
-import com.yousufsohail.myimdb.dummy.DummyContent;
+import com.yousufsohail.myimdb.service.ImdbService;
+import com.yousufsohail.myimdb.service.ServiceGenerator;
+import com.yousufsohail.myimdb.service.response.ResponseMoviesTopRated;
+import com.yousufsohail.myimdb.ui.adapters.MovieListAdapter;
 
-import java.util.List;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import static com.yousufsohail.myimdb.constant.ApiConstants.IMDB_API_KEY;
 
 /**
  * An activity representing a list of Movies. This activity
@@ -31,6 +27,7 @@ import java.util.List;
  */
 public class MovieListActivity extends AppCompatActivity {
 
+    RecyclerView recyclerView;
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
@@ -46,18 +43,9 @@ public class MovieListActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
-        View recyclerView = findViewById(R.id.movie_list);
+        recyclerView = (RecyclerView) findViewById(R.id.movie_list);
         assert recyclerView != null;
-        setupRecyclerView((RecyclerView) recyclerView);
+        setupRecyclerView();
 
         if (findViewById(R.id.movie_detail_container) != null) {
             // The detail container view will be present only in the
@@ -68,76 +56,24 @@ public class MovieListActivity extends AppCompatActivity {
         }
     }
 
-    private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DummyContent.ITEMS));
+    private void setupRecyclerView() {
+        fetchMoviesTop();
+//        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(DummyContent.ITEMS));
     }
 
-    public class SimpleItemRecyclerViewAdapter
-            extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
-
-        private final List<DummyContent.DummyItem> mValues;
-
-        public SimpleItemRecyclerViewAdapter(List<DummyContent.DummyItem> items) {
-            mValues = items;
-        }
-
-        @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.movie_list_content, parent, false);
-            return new ViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mItem = mValues.get(position);
-            holder.mIdView.setText(mValues.get(position).id);
-            holder.mContentView.setText(mValues.get(position).content);
-
-            holder.mView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mTwoPane) {
-                        Bundle arguments = new Bundle();
-                        arguments.putString(MovieDetailFragment.ARG_ITEM_ID, holder.mItem.id);
-                        MovieDetailFragment fragment = new MovieDetailFragment();
-                        fragment.setArguments(arguments);
-                        getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.movie_detail_container, fragment)
-                                .commit();
-                    } else {
-                        Context context = v.getContext();
-                        Intent intent = new Intent(context, MovieDetailActivity.class);
-                        intent.putExtra(MovieDetailFragment.ARG_ITEM_ID, holder.mItem.id);
-
-                        context.startActivity(intent);
-                    }
-                }
-            });
-        }
-
-        @Override
-        public int getItemCount() {
-            return mValues.size();
-        }
-
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public final View mView;
-            public final TextView mIdView;
-            public final TextView mContentView;
-            public DummyContent.DummyItem mItem;
-
-            public ViewHolder(View view) {
-                super(view);
-                mView = view;
-                mIdView = (TextView) view.findViewById(R.id.id);
-                mContentView = (TextView) view.findViewById(R.id.content);
+    private void fetchMoviesTop() {
+        ImdbService service = ServiceGenerator.getInstance().createService(ImdbService.class);
+        Call<ResponseMoviesTopRated> movies = service.getMoviesTop(IMDB_API_KEY);
+        movies.enqueue(new Callback<ResponseMoviesTopRated>() {
+            @Override
+            public void onResponse(Call<ResponseMoviesTopRated> call, Response<ResponseMoviesTopRated> response) {
+                recyclerView.setAdapter(new MovieListAdapter(response.body().getMovies()));
             }
 
             @Override
-            public String toString() {
-                return super.toString() + " '" + mContentView.getText() + "'";
+            public void onFailure(Call<ResponseMoviesTopRated> call, Throwable t) {
+
             }
-        }
+        });
     }
 }
