@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -42,12 +43,15 @@ public class MovieListActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     MovieListAdapter mAdapter;
     ProgressBar progressBar;
+    int mPageNo, totalRecordsOnServer, totalItemRendered, lastVisibleItem;
+
     List<Movie> movies = new ArrayList<>();
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
      * device.
      */
     private boolean mTwoPane;
+    private boolean isLoading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +66,26 @@ public class MovieListActivity extends AppCompatActivity {
 
         recyclerView = (RecyclerView) findViewById(R.id.movie_list);
         assert recyclerView != null;
+
+        final LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(mLayoutManager);
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                totalItemRendered = mLayoutManager.getItemCount();
+                lastVisibleItem = mLayoutManager.findLastVisibleItemPosition();
+                if (totalItemRendered < totalRecordsOnServer) {
+                    if (!isLoading && totalItemRendered <= (lastVisibleItem + 1)) {
+                        isLoading = true;
+                        fetchMoreMovies();
+                    }
+                }
+            }
+        });
+
         setDataInAdapter(movies);
 
         if (findViewById(R.id.movie_detail_container) != null) {
@@ -76,7 +100,17 @@ public class MovieListActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        refreshMovieList();
+        fetchMovieList();
+    }
+
+    private void fetchMovieList() {
+        mPageNo = 1;
+        getMovieList(mPageNo);
+    }
+
+    private void fetchMoreMovies() {
+        mPageNo++;
+        getMovieList(mPageNo);
     }
 
     private void setDataInAdapter(List<Movie> movies) {
@@ -88,12 +122,12 @@ public class MovieListActivity extends AppCompatActivity {
         }
     }
 
-    private void refreshMovieList() {
+    private void getMovieList(final int pageNumber) {
 
         showProgressBar();
 
         ImdbService service = ServiceGenerator.getInstance().createService(ImdbService.class);
-        Call<ResponseMoviesTopRated> getMovies = service.getMoviesTop(IMDB_API_KEY);
+        Call<ResponseMoviesTopRated> getMovies = service.getMoviesTop(IMDB_API_KEY, pageNumber);
         getMovies.enqueue(new Callback<ResponseMoviesTopRated>() {
             @Override
             public void onResponse(Call<ResponseMoviesTopRated> call, Response<ResponseMoviesTopRated> response) {
@@ -103,10 +137,16 @@ public class MovieListActivity extends AppCompatActivity {
                 if (!response.isSuccessful()) {
                     Toast.makeText(MovieListActivity.this, R.string.server_error, Toast.LENGTH_SHORT).show();
                 } else if (body != null && body.getMovies() != null && body.getMovies().size() > 0) {
-
-                    movies.clear();
-                    movies.addAll(body.getMovies());
+                    isLoading = false;
+                    if (pageNumber == 1) {
+                        totalRecordsOnServer = body.total_results;
+                        movies.clear();
+                        movies.addAll(body.getMovies());
+                    } else {
+                        movies.addAll(body.getMovies());
+                    }
                     setDataInAdapter(movies);
+
 
                 } else {
                     Toast.makeText(MovieListActivity.this, R.string.movie_not_found, Toast.LENGTH_SHORT).show();

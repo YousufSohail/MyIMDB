@@ -15,7 +15,7 @@ import retrofit2.http.Query;
 public interface ImdbService {
 
     @GET("movie/top_rated")
-    Call<ResponseMoviesTopRated> getMoviesTop(@Query("api_key") String apiKey);
+    Call<ResponseMoviesTopRated> getMoviesTop(@Query("api_key") String apiKey, @Query("page") int page);
 
     @GET("movie/{movie_id}")
     Call<ResponseMovieDetails> getMovieDetails(@Path("movie_id") String movieId, @Query("api_key") String apiKey);
